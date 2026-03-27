@@ -1,0 +1,985 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Chem Quiz Cards</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --card: #1e293b;
+      --line: #334155;
+      --text: #e2e8f0;
+      --muted: #94a3b8;
+      --accent: #22c55e;
+      --accent-2: #38bdf8;
+      --danger: #ef4444;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      padding: 20px;
+    }
+    .app {
+      max-width: 980px;
+      margin: 0 auto;
+      display: grid;
+      gap: 14px;
+    }
+    .panel {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 14px;
+    }
+    h1, h2, h3, p { margin: 0; }
+    h1 { font-size: 26px; }
+    h2 { font-size: 18px; margin-bottom: 8px; }
+    .muted { color: var(--muted); }
+    .row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+    }
+    input, textarea, select, button {
+      border-radius: 10px;
+      border: 1px solid var(--line);
+      padding: 10px 12px;
+      background: #0b1220;
+      color: var(--text);
+      font: inherit;
+    }
+    input, select { min-height: 40px; }
+    textarea { width: 100%; min-height: 88px; resize: vertical; }
+    button {
+      cursor: pointer;
+      border: none;
+      font-weight: 700;
+      background: var(--accent);
+      color: #052e16;
+    }
+    button.secondary { background: #1f2937; color: var(--text); border: 1px solid var(--line); }
+    button.info { background: var(--accent-2); color: #082f49; }
+    button.danger { background: var(--danger); color: #fee2e2; }
+    .preset-list { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+    .chip { background: #0b1220; border: 1px solid var(--line); border-radius: 999px; padding: 6px 10px; }
+    .quiz {
+      display: grid;
+      gap: 10px;
+      justify-items: center;
+    }
+    .quiz-card {
+      width: min(100%, 680px);
+      min-height: 420px;
+      border-radius: 14px;
+      border: 1px solid var(--line);
+      background: #0b1220;
+      padding: 16px;
+      display: grid;
+      grid-template-rows: auto auto 1fr auto;
+      gap: 10px;
+      align-items: start;
+      text-align: center;
+    }
+    .term {
+      font-size: 28px;
+      font-weight: 700;
+      word-break: break-word;
+    }
+    .subtitle {
+      color: var(--muted);
+      font-size: 15px;
+    }
+    .image-wrap {
+      border: 1px dashed var(--line);
+      border-radius: 12px;
+      min-height: 240px;
+      display: grid;
+      place-items: center;
+      overflow: hidden;
+    }
+    .image-wrap img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      max-height: 320px;
+    }
+    .status { color: var(--muted); font-size: 14px; }
+    .controls { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <div class="panel">
+      <h1>🧪 Chem Quiz Cards</h1>
+      <p class="muted">10 карточек: формальное название + картинка, переворот = тривиальное название.</p>
+    </div>
+
+    <div class="panel">
+      <h2>Ключи API</h2>
+      <p class="muted" style="margin-bottom:8px">
+        Сохраняются только в этом браузере (<code>localStorage</code>). Для GitHub Pages можно подставить значения при сборке: замени в файле строки
+        <code>__CHEM_BUILD_MISTRAL__</code> и <code>__CHEM_BUILD_PIXAZO__</code> на ключи (например, шагом workflow с <code>sed</code>); пользовательский ввод ниже тогда необязателен.
+      </p>
+      <div class="row" style="align-items:flex-end">
+        <label style="display:flex;flex-direction:column;gap:4px;flex:1;min-width:200px">
+          <span class="muted" style="font-size:12px">Mistral (названия)</span>
+          <input id="secretMistral" type="password" autocomplete="off" placeholder="" />
+        </label>
+        <label style="display:flex;flex-direction:column;gap:4px;flex:1;min-width:200px">
+          <span class="muted" style="font-size:12px">Pixazo (картинки AI)</span>
+          <input id="secretPixazo" type="password" autocomplete="off" placeholder="" />
+        </label>
+        <button type="button" class="info" id="saveSecretsBtn">Сохранить ключи</button>
+        <button type="button" class="secondary" id="clearSecretsBtn">Очистить</button>
+      </div>
+      <p class="muted" id="secretsStatus" style="margin-top:8px;font-size:13px"></p>
+    </div>
+
+    <div class="panel">
+      <h2>Набор карточек</h2>
+      <div class="row">
+        <button class="secondary" id="randomBtn">Случайные 10 из базы</button>
+        <button class="secondary" id="baseOrganicBtn">Готовый: органика</button>
+        <button class="secondary" id="baseInorganicBtn">Готовый: неорганика</button>
+        <button class="secondary" id="iupacOrganicBtn">ИЮПАК: органика (EN)</button>
+        <button class="secondary" id="iupacInorganicBtn">ИЮПАК: неорганика (EN)</button>
+      </div>
+      <div class="row" style="margin-top:8px">
+        <label class="muted" style="display:flex;align-items:center;gap:8px;cursor:pointer">
+          <input type="checkbox" id="presetLangIupac" />
+          Список в поле ниже — <strong>ИЮПАК / англ.</strong> (строка: <code>ethanoic acid | acetic acid</code> или только <code>phenylamine</code>; для картинок и 2D подставляется именно это имя в PubChem/Wiki)
+        </label>
+      </div>
+      <div style="margin-top:10px">
+        <p class="muted">Свой список: по строке или через запятую. Русский режим: <code>формальное | тривиальное</code>. Режим ИЮПАК (галочка выше): английские названия; после <code>|</code> — бытовое имя на английском (необязательно). Неполные пары добиваются переводом и при необходимости Mistral + CID из PubChem.</p>
+        <textarea id="customNames" placeholder="фениламин | анилин&#10;или (ИЮПАК):&#10;phenylamine | aniline&#10;ethanoic acid"></textarea>
+      </div>
+      <div class="row" style="margin-top:10px">
+        <input id="presetName" placeholder="Название пресета" />
+        <button id="savePresetBtn" class="info">Сохранить пресет</button>
+      </div>
+      <div id="savedPresets" class="preset-list"></div>
+    </div>
+
+    <div class="panel">
+      <h2>Изображения</h2>
+      <div class="row">
+        <label><input type="checkbox" id="useImages" checked /> Включить изображения</label>
+        <label>Тип:
+          <select id="imageType">
+            <option value="ai">AI-рендер</option>
+            <option value="wiki">Wiki-фото</option>
+            <option value="structure2d">2D-структура (если есть)</option>
+          </select>
+        </label>
+        <button id="startQuizBtn">Начать тест (10 карточек)</button>
+      </div>
+      <p class="muted" style="margin-top:8px">
+        Тип `structure2d` доступен не для всех веществ. В этом случае карточка покажет название без картинки.
+      </p>
+    </div>
+
+    <div class="panel quiz" id="quizPanel" style="display:none">
+      <div id="quizProgress" class="muted"></div>
+      <div class="quiz-card">
+        <div class="term" id="cardTerm">-</div>
+        <div class="subtitle" id="cardSide">Лицевая сторона</div>
+        <div class="image-wrap" id="imageWrap">
+          <div class="status" id="imageStatus">Картинка отключена</div>
+          <img id="cardImage" alt="chemical image" style="display:none" />
+        </div>
+        <div class="status" id="cardHint"></div>
+      </div>
+      <div class="controls">
+        <button class="secondary" id="prevBtn">Назад</button>
+        <button class="info" id="flipBtn">Перевернуть</button>
+        <button class="secondary" id="nextBtn">Вперед</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const STORAGE_KEY = "chem_quiz_presets_v2";
+    const SECRETS_STORAGE_KEY = "chem_quiz_api_secrets_v1";
+
+    /**
+     * Плейсхолдеры под деплой (GitHub Actions и т.п.): перед публикацией замени на реальные ключи
+     * или оставь как есть и задай ключи в панели выше.
+     */
+    const __CHEM_BUILD_MISTRAL__ = "__CHEM_BUILD_MISTRAL__";
+    const __CHEM_BUILD_PIXAZO__ = "__CHEM_BUILD_PIXAZO__";
+
+    /**
+     * База: русские названия + PubChem CID.
+     * iupacEn — для пресетов в ИЮПАК (англ.); enAliases — бытовые англ. имена для подбора из базы.
+     */
+    const BASE_CARDS = [
+      { formalRu: "фениламин", trivialRu: "анилин", cid: 6115, iupacEn: "phenylamine", enAliases: ["aniline"] },
+      { formalRu: "этановая кислота", trivialRu: "уксусная кислота", cid: 176, iupacEn: "ethanoic acid", enAliases: ["acetic acid"] },
+      { formalRu: "метановая кислота", trivialRu: "муравьиная кислота", cid: 284, iupacEn: "methanoic acid", enAliases: ["formic acid"] },
+      { formalRu: "2-гидроксипропановая кислота", trivialRu: "молочная кислота", cid: 612, iupacEn: "2-hydroxypropanoic acid", enAliases: ["lactic acid"] },
+      { formalRu: "пропан-2-он", trivialRu: "ацетон", cid: 180, iupacEn: "propan-2-one", enAliases: ["acetone"] },
+      { formalRu: "перекись водорода", trivialRu: "пергидроль", cid: 784, iupacEn: "hydrogen peroxide", enAliases: [] },
+      { formalRu: "гидрокарбонат натрия", trivialRu: "пищевая сода", cid: 516892, iupacEn: "sodium bicarbonate", enAliases: ["baking soda"] },
+      { formalRu: "хлорид натрия", trivialRu: "поваренная соль", cid: 5234, iupacEn: "sodium chloride", enAliases: ["table salt", "rock salt"] },
+      { formalRu: "сахароза", trivialRu: "столовый сахар", cid: 5988, iupacEn: "sucrose", enAliases: ["table sugar"] },
+      { formalRu: "этанол", trivialRu: "этиловый спирт", cid: 702, iupacEn: "ethanol", enAliases: ["ethyl alcohol"] },
+      { formalRu: "пропантриол", trivialRu: "глицерин", cid: 753, iupacEn: "propane-1,2,3-triol", enAliases: ["glycerol", "glycerin"] },
+      { formalRu: "метаналь", trivialRu: "формальдегид", cid: 712, iupacEn: "methanal", enAliases: ["formaldehyde"] },
+      { formalRu: "бензен", trivialRu: "бензол", cid: 241, iupacEn: "benzene", enAliases: [] },
+      { formalRu: "метилбензол", trivialRu: "толуол", cid: 1140, iupacEn: "methylbenzene", enAliases: ["toluene"] },
+      { formalRu: "2-гидроксибензойная кислота", trivialRu: "салициловая кислота", cid: 338, iupacEn: "2-hydroxybenzoic acid", enAliases: ["salicylic acid"] },
+      { formalRu: "двуокись углерода", trivialRu: "углекислый газ", cid: 280, iupacEn: "carbon dioxide", enAliases: [] },
+      { formalRu: "аммиак", trivialRu: "аммиак", cid: 222, iupacEn: "ammonia", enAliases: [] },
+      { formalRu: "оксид кальция", trivialRu: "негашёная известь", cid: 14778, iupacEn: "calcium oxide", enAliases: ["quicklime"] },
+      { formalRu: "гидроксид кальция", trivialRu: "гашёная известь", cid: 14777, iupacEn: "calcium hydroxide", enAliases: ["slaked lime"] },
+      { formalRu: "марганцовокислый калий", trivialRu: "марганцовка", cid: 516875, iupacEn: "potassium permanganate", enAliases: [] },
+      { formalRu: "серная кислота", trivialRu: "масло витриола", cid: 1118, iupacEn: "sulfuric acid", enAliases: [] },
+      { formalRu: "азотная кислота", trivialRu: "кипячая кислота", cid: 944, iupacEn: "nitric acid", enAliases: [] },
+      { formalRu: "соляная кислота", trivialRu: "хлороводород", cid: 313, iupacEn: "hydrochloric acid", enAliases: ["muriatic acid"] },
+      { formalRu: "карбонат натрия", trivialRu: "кальцинированная сода", cid: 10340, iupacEn: "sodium carbonate", enAliases: ["washing soda", "soda ash"] }
+    ];
+
+    const READY_PRESETS = {
+      organic: ["фениламин", "этановая кислота", "метановая кислота", "пропан-2-он", "этанол", "бензол", "метилбензол", "метаналь", "пропантриол", "2-гидроксибензойная кислота"],
+      inorganic: ["хлорид натрия", "двуокись углерода", "аммиак", "оксид кальция", "гидроксид кальция", "марганцовокислый калий", "серная кислота", "азотная кислота", "соляная кислота", "карбонат натрия"]
+    };
+
+    const READY_PRESETS_IUPAC = {
+      organic: [
+        "phenylamine",
+        "ethanoic acid",
+        "methanoic acid",
+        "propan-2-one",
+        "ethanol",
+        "benzene",
+        "methylbenzene",
+        "methanal",
+        "propane-1,2,3-triol",
+        "2-hydroxybenzoic acid"
+      ],
+      inorganic: [
+        "sodium chloride",
+        "carbon dioxide",
+        "ammonia",
+        "calcium oxide",
+        "calcium hydroxide",
+        "potassium permanganate",
+        "sulfuric acid",
+        "nitric acid",
+        "hydrochloric acid",
+        "sodium carbonate"
+      ]
+    };
+
+    let quizCards = [];
+    let currentIndex = 0;
+    let isFlipped = false;
+    const imageCache = new Map();
+
+    const byAlias = buildAliasIndex(BASE_CARDS);
+
+    function normalize(v) {
+      return String(v || "").trim().toLowerCase();
+    }
+
+    function buildAliasIndex(cards) {
+      const map = {};
+      cards.forEach(card => {
+        map[normalize(card.formalRu)] = card;
+        map[normalize(card.trivialRu)] = card;
+        if (card.iupacEn) map[normalize(card.iupacEn)] = card;
+        (card.enAliases || []).forEach(a => {
+          if (a) map[normalize(a)] = card;
+        });
+      });
+      return map;
+    }
+
+    function parsePresetLines(raw, langEn) {
+      return raw
+        .split(/\n|,/g)
+        .map(s => s.trim())
+        .filter(Boolean)
+        .map(line => {
+          const idx = line.indexOf("|");
+          const left = idx === -1 ? line.trim() : line.slice(0, idx).trim();
+          const right = idx === -1 ? "" : line.slice(idx + 1).trim();
+          if (langEn) {
+            return {
+              iupacFormalEn: left || null,
+              iupacTrivialEn: right || null
+            };
+          }
+          return {
+            formalRu: left || null,
+            trivialRu: right || null
+          };
+        })
+        .filter(it =>
+          langEn ? (it.iupacFormalEn || it.iupacTrivialEn) : (it.formalRu || it.trivialRu)
+        );
+    }
+
+    function shuffle(list) {
+      const arr = [...list];
+      for (let i = arr.length - 1; i > 0; i -= 1) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+      }
+      return arr;
+    }
+
+    function findBaseCard(rusName) {
+      if (!rusName) return null;
+      return byAlias[normalize(rusName)] || null;
+    }
+
+    function cardFromPresetItem(item, langEn) {
+      if (!langEn) {
+        let base = null;
+        if (item.formalRu) base = findBaseCard(item.formalRu);
+        if (!base && item.trivialRu) base = findBaseCard(item.trivialRu);
+
+        let formalRu = item.formalRu ? item.formalRu.trim() : null;
+        let trivialRu = item.trivialRu ? item.trivialRu.trim() : null;
+
+        if (base) {
+          if (!formalRu) formalRu = base.formalRu;
+          if (!trivialRu) trivialRu = base.trivialRu;
+          return {
+            formalRu,
+            trivialRu,
+            cid: base.cid,
+            iupacFormalEn: base.iupacEn || null,
+            iupacTrivialEn: null
+          };
+        }
+
+        if (formalRu && !trivialRu) {
+          return { formalRu, trivialRu: null, cid: null, iupacFormalEn: null, iupacTrivialEn: null };
+        }
+        if (!formalRu && trivialRu) {
+          return { formalRu: null, trivialRu, cid: null, iupacFormalEn: null, iupacTrivialEn: null };
+        }
+        if (formalRu && trivialRu) {
+          return { formalRu, trivialRu, cid: null, iupacFormalEn: null, iupacTrivialEn: null };
+        }
+        return null;
+      }
+
+      let base = null;
+      if (item.iupacFormalEn) base = findBaseCard(item.iupacFormalEn);
+      if (!base && item.iupacTrivialEn) base = findBaseCard(item.iupacTrivialEn);
+
+      if (base) {
+        let trivialRu = base.trivialRu;
+        if (item.iupacTrivialEn?.trim()) trivialRu = null;
+        return {
+          formalRu: base.formalRu,
+          trivialRu,
+          cid: base.cid,
+          iupacFormalEn: item.iupacFormalEn?.trim() || base.iupacEn || null,
+          iupacTrivialEn: item.iupacTrivialEn?.trim() || null
+        };
+      }
+
+      const iupacFormalEn = item.iupacFormalEn?.trim() || null;
+      const iupacTrivialEn = item.iupacTrivialEn?.trim() || null;
+      if (!iupacFormalEn && !iupacTrivialEn) return null;
+      return {
+        formalRu: null,
+        trivialRu: null,
+        cid: null,
+        iupacFormalEn,
+        iupacTrivialEn
+      };
+    }
+
+    function poolDedupeKey(card) {
+      return normalize(card.iupacFormalEn || card.formalRu || "") || normalize(card.iupacTrivialEn || card.trivialRu || "");
+    }
+
+    function fillTo10Cards(pool) {
+      const out = pool.filter(Boolean);
+      const have = new Set(out.map(poolDedupeKey).filter(Boolean));
+      const extra = shuffle(
+        BASE_CARDS.filter(b => !have.has(normalize(b.formalRu)) && !have.has(normalize(b.iupacEn || "")))
+      );
+      for (const b of extra) {
+        if (out.length >= 10) break;
+        out.push({
+          formalRu: b.formalRu,
+          trivialRu: b.trivialRu,
+          cid: b.cid,
+          iupacFormalEn: b.iupacEn || null,
+          iupacTrivialEn: null
+        });
+      }
+      return out.slice(0, 10);
+    }
+
+    function buildPoolFromParsed(items, langEn) {
+      const pool = items.map(it => cardFromPresetItem(it, langEn)).filter(Boolean);
+      let result = pool;
+      if (result.length > 10) result = shuffle(result).slice(0, 10);
+      else if (result.length < 10) result = fillTo10Cards(result);
+      return result;
+    }
+
+    function pickRandom10FromBase() {
+      const clone = c => ({
+        formalRu: c.formalRu,
+        trivialRu: c.trivialRu,
+        cid: c.cid,
+        iupacFormalEn: c.iupacEn || null,
+        iupacTrivialEn: null
+      });
+      if (BASE_CARDS.length <= 10) return shuffle(BASE_CARDS.map(clone));
+      return shuffle(BASE_CARDS).slice(0, 10).map(clone);
+    }
+
+    function loadUserSecrets() {
+      try {
+        const raw = localStorage.getItem(SECRETS_STORAGE_KEY);
+        if (!raw) return {};
+        const j = JSON.parse(raw);
+        return typeof j === "object" && j ? j : {};
+      } catch {
+        return {};
+      }
+    }
+
+    function saveUserSecrets(obj) {
+      localStorage.setItem(SECRETS_STORAGE_KEY, JSON.stringify(obj));
+    }
+
+    function isInjectedBuildToken(value, placeholder) {
+      if (typeof value !== "string" || !value) return false;
+      return value !== placeholder;
+    }
+
+    function getMistralApiKey() {
+      const user = String(loadUserSecrets().mistral || "").trim();
+      if (user) return user;
+      if (isInjectedBuildToken(__CHEM_BUILD_MISTRAL__, "__CHEM_BUILD_MISTRAL__")) {
+        return __CHEM_BUILD_MISTRAL__.trim();
+      }
+      return "";
+    }
+
+    function getPixazoApiKey() {
+      const user = String(loadUserSecrets().pixazo || "").trim();
+      if (user) return user;
+      if (isInjectedBuildToken(__CHEM_BUILD_PIXAZO__, "__CHEM_BUILD_PIXAZO__")) {
+        return __CHEM_BUILD_PIXAZO__.trim();
+      }
+      return "";
+    }
+
+    function refreshSecretsFormStatus() {
+      const el = document.getElementById("secretsStatus");
+      if (!el) return;
+      const m = getMistralApiKey() ? "есть" : "нет";
+      const p = getPixazoApiKey() ? "есть" : "нет";
+      const from = loadUserSecrets().mistral || loadUserSecrets().pixazo
+        ? "из сохранённых в браузере или из подстановки при сборке."
+        : isInjectedBuildToken(__CHEM_BUILD_MISTRAL__, "__CHEM_BUILD_MISTRAL__") ||
+            isInjectedBuildToken(__CHEM_BUILD_PIXAZO__, "__CHEM_BUILD_PIXAZO__")
+          ? "из подстановки при сборке."
+          : "не заданы — укажи в полях выше либо подставь плейсхолдеры в HTML.";
+      el.textContent = `Mistral: ${m}, Pixazo: ${p} (${from})`;
+    }
+
+    function initSecretsUi() {
+      const s = loadUserSecrets();
+      const m = document.getElementById("secretMistral");
+      const p = document.getElementById("secretPixazo");
+      if (m) m.value = s.mistral || "";
+      if (p) p.value = s.pixazo || "";
+      refreshSecretsFormStatus();
+
+      document.getElementById("saveSecretsBtn")?.addEventListener("click", () => {
+        saveUserSecrets({
+          mistral: document.getElementById("secretMistral")?.value?.trim() || "",
+          pixazo: document.getElementById("secretPixazo")?.value?.trim() || ""
+        });
+        refreshSecretsFormStatus();
+        document.getElementById("secretsStatus").textContent += " Сохранено.";
+      });
+      document.getElementById("clearSecretsBtn")?.addEventListener("click", () => {
+        localStorage.removeItem(SECRETS_STORAGE_KEY);
+        if (m) m.value = "";
+        if (p) p.value = "";
+        refreshSecretsFormStatus();
+      });
+    }
+
+    async function get_translate(name) {
+      const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=ru&tl=en&dt=t&q=${encodeURIComponent(name)}`;
+      const response = await fetch(url);
+      const data = await response.json();
+      return data[0][0][0];
+    }
+
+    async function get_translate_en_to_ru(name) {
+      const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=ru&dt=t&q=${encodeURIComponent(name)}`;
+      const response = await fetch(url);
+      const data = await response.json();
+      return data[0][0][0];
+    }
+
+    async function fetchPubChemCid(englishName) {
+      const q = String(englishName || "").trim();
+      if (!q) return null;
+      const url = `https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/${encodeURIComponent(q)}/cids/JSON`;
+      try {
+        const r = await fetch(url);
+        if (!r.ok) return null;
+        const j = await r.json();
+        const ids = j?.IdentifierList?.CID;
+        if (Array.isArray(ids) && ids.length) return ids[0];
+        if (typeof ids === "number") return ids;
+        return null;
+      } catch {
+        return null;
+      }
+    }
+
+    async function mistralComplete(prompt, maxTokens = 96) {
+      const key = getMistralApiKey();
+      if (!key) return null;
+      const URL = "https://api.mistral.ai/v1/chat/completions";
+      try {
+        const response = await fetch(URL, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Accept": "application/json",
+            "Authorization": `Bearer ${key}`
+          },
+          body: JSON.stringify({
+            model: "mistral-small-latest",
+            messages: [{ role: "user", content: prompt }],
+            temperature: 0.25,
+            max_tokens: maxTokens
+          })
+        });
+        if (!response.ok) return null;
+        const data = await response.json();
+        let t = data.choices?.[0]?.message?.content;
+        if (!t) return null;
+        t = t.trim().replace(/^["'«„]+|["'»]+$/g, "");
+        t = t.split(/\n/)[0].trim();
+        return t || null;
+      } catch {
+        return null;
+      }
+    }
+
+    async function mistralTrivialFromFormal(formalRu) {
+      const t = await mistralComplete(
+        `Вещество (русское систематическое или учебное название): «${formalRu}». Дай ОДНО краткое бытовое или тривиальное русское название того же вещества. Только название, без кавычек, скобок и пояснений.`
+      );
+      return t || "нет данных (добавь ключ Mistral или пару в пресете)";
+    }
+
+    async function mistralFormalFromTrivial(trivialRu) {
+      const t = await mistralComplete(
+        `Тривиальное русское название вещества: «${trivialRu}». Дай ОДНО краткое систематическое русское название (по возможности по ИЮПАК). Только название, без кавычек и пояснений.`
+      );
+      return t || trivialRu;
+    }
+
+    async function enrichCard(card) {
+      if (card.iupacFormalEn && !card.cid) {
+        const cid = await fetchPubChemCid(card.iupacFormalEn);
+        if (cid) card.cid = cid;
+      }
+      if (card.iupacFormalEn && !card.formalRu?.trim()) {
+        card.formalRu = (await get_translate_en_to_ru(card.iupacFormalEn)).trim();
+      }
+      if (card.iupacTrivialEn && !card.trivialRu?.trim()) {
+        card.trivialRu = (await get_translate_en_to_ru(card.iupacTrivialEn)).trim();
+      }
+
+      let formalRu = card.formalRu?.trim() || "";
+      let trivialRu = card.trivialRu?.trim() || "";
+
+      if (formalRu && trivialRu) {
+        card.formalRu = formalRu;
+        card.trivialRu = trivialRu;
+        card._enFormal = null;
+        return;
+      }
+
+      if (!formalRu && trivialRu) {
+        formalRu = await mistralFormalFromTrivial(trivialRu);
+      }
+      if (formalRu && !trivialRu) {
+        trivialRu = await mistralTrivialFromFormal(formalRu);
+      }
+      if (!formalRu && trivialRu) formalRu = trivialRu;
+
+      card.formalRu = formalRu;
+      card.trivialRu = trivialRu;
+      card._enFormal = null;
+    }
+
+    async function askMistralAppearance(englishName) {
+      if (!englishName) return "white solid, laboratory sample";
+      const t = await mistralComplete(
+        `Describe how the chemical substance "${englishName}" looks in real life. One short English phrase: color, state, texture. No markdown.`,
+        120
+      );
+      return t || `realistic look of ${englishName}`;
+    }
+
+    async function generatePixazoImage(prompt) {
+      const API_KEY = getPixazoApiKey();
+      if (!API_KEY) return null;
+      const url = "https://gateway.pixazo.ai/getImage/v1/getSDXLImage";
+      const payload = {
+        prompt,
+        aspect_ratio: "1:1",
+        cfg: 4.5,
+        steps: 35,
+        output_format: "webp",
+        output_quality: 85,
+        prompt_strength: 0.85
+      };
+      const response = await fetch(url, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Cache-Control": "no-cache",
+          "Ocp-Apim-Subscription-Key": API_KEY
+        },
+        body: JSON.stringify(payload)
+      });
+      if (!response.ok) return null;
+      const data = await response.json();
+      return data.imageUrl || null;
+    }
+
+    async function getWikiImg(element) {
+      const url = `https://en.wikipedia.org/w/api.php?action=query&titles=${encodeURIComponent(element)}&prop=pageimages&format=json&pithumbsize=900&origin=*`;
+      const response = await fetch(url);
+      if (!response.ok) return null;
+      const data = await response.json();
+      const pages = data?.query?.pages || {};
+      const id = Object.keys(pages)[0];
+      return pages?.[id]?.thumbnail?.source || null;
+    }
+
+    function generateStructure2d(name, cid) {
+      if (!cid && !name) return null;
+      if (cid) {
+        return `https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/cid/${encodeURIComponent(cid)}/PNG?record_type=2d&image_size=large`;
+      }
+      return `https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/${encodeURIComponent(name)}/PNG?record_type=2d&image_size=large`;
+    }
+
+    function canUseImageType(card, type) {
+      if (type === "structure2d") return Boolean(card.cid || card.formalRu);
+      return true;
+    }
+
+    async function getEnglishFormal(card) {
+      if (card.iupacFormalEn && String(card.iupacFormalEn).trim()) {
+        return card.iupacFormalEn.trim();
+      }
+      const ru = card.formalRu?.trim() || card.trivialRu?.trim() || "";
+      if (!ru) return "";
+      if (card._enFormal) return card._enFormal;
+      try {
+        card._enFormal = await get_translate(ru);
+      } catch {
+        card._enFormal = ru;
+      }
+      return card._enFormal;
+    }
+
+    async function resolveImage(card, type) {
+      const key = `${normalize(card.formalRu)}|${normalize(card.iupacFormalEn || "")}|${type}|${card.cid ?? ""}`;
+      if (imageCache.has(key)) return imageCache.get(key);
+
+      const en = await getEnglishFormal(card);
+      let url = null;
+      if (type === "wiki") {
+        url = await getWikiImg(en);
+      } else if (type === "structure2d") {
+        url = generateStructure2d(en, card.cid);
+      } else {
+        const description = await askMistralAppearance(en);
+        const prompt = `realistic photo of ${en}, ${description}, clean background, no text`;
+        url = await generatePixazoImage(prompt);
+      }
+
+      imageCache.set(key, url);
+      return url;
+    }
+
+    function legacyItemsToText(items) {
+      return items
+        .map(it => {
+          if (it.iupacFormalEn || it.iupacTrivialEn) {
+            const f = it.iupacFormalEn?.trim() || "";
+            const t = it.iupacTrivialEn?.trim() || "";
+            if (f && t) return `${f} | ${t}`;
+            if (f) return f;
+            if (t) return `| ${t}`;
+          }
+          const f = it.formalRu?.trim() || "";
+          const t = it.trivialRu?.trim() || "";
+          if (f && t) return `${f} | ${t}`;
+          if (f) return f;
+          if (t) return `| ${t}`;
+          return "";
+        })
+        .filter(Boolean)
+        .join("\n");
+    }
+
+    function normalizePreset(p) {
+      if (p && typeof p.text === "string") {
+        return { name: p.name, text: p.text, lang: p.lang === "en" ? "en" : "ru" };
+      }
+      if (p.items && Array.isArray(p.items)) {
+        return {
+          name: p.name,
+          text: legacyItemsToText(p.items),
+          lang: p.lang === "en" ? "en" : "ru"
+        };
+      }
+      if (p.names && Array.isArray(p.names)) {
+        return { name: p.name, text: p.names.join("\n"), lang: "ru" };
+      }
+      return { name: p?.name || "", text: "", lang: "ru" };
+    }
+
+    function presetToTextarea(p) {
+      return normalizePreset(p).text || "";
+    }
+
+    function loadSavedPresets() {
+      try {
+        const rawV2 = localStorage.getItem(STORAGE_KEY);
+        if (rawV2) {
+          const raw = JSON.parse(rawV2);
+          return Array.isArray(raw) ? raw.map(normalizePreset) : [];
+        }
+        const rawV1 = localStorage.getItem("chem_quiz_presets_v1");
+        if (rawV1) {
+          const raw = JSON.parse(rawV1);
+          return Array.isArray(raw) ? raw.map(normalizePreset) : [];
+        }
+      } catch { /* ignore */ }
+      return [];
+    }
+
+    function savePreset(name, text, lang) {
+      const presets = loadSavedPresets().map(normalizePreset);
+      const next = [
+        { name, text, lang: lang === "en" ? "en" : "ru" },
+        ...presets.filter(p => normalize(p.name) !== normalize(name))
+      ];
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+      renderSavedPresets();
+    }
+
+    function deletePreset(name) {
+      const presets = loadSavedPresets().filter(p => normalize(p.name) !== normalize(name));
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(presets));
+      renderSavedPresets();
+    }
+
+    function renderSavedPresets() {
+      const wrap = document.getElementById("savedPresets");
+      wrap.innerHTML = "";
+      const presets = loadSavedPresets();
+      if (!presets.length) {
+        wrap.innerHTML = `<span class="muted">Сохраненных пресетов пока нет.</span>`;
+        return;
+      }
+      presets.forEach(preset => {
+        const pr = normalizePreset(preset);
+        const useBtn = document.createElement("button");
+        useBtn.className = "secondary chip";
+        useBtn.textContent = `▶ ${pr.name}${pr.lang === "en" ? " · ИЮПАК" : ""}`;
+        useBtn.onclick = () => {
+          document.getElementById("customNames").value = pr.text || "";
+          document.getElementById("presetLangIupac").checked = pr.lang === "en";
+        };
+        const delBtn = document.createElement("button");
+        delBtn.className = "danger chip";
+        delBtn.textContent = `✕ ${pr.name}`;
+        delBtn.onclick = () => deletePreset(pr.name);
+        wrap.appendChild(useBtn);
+        wrap.appendChild(delBtn);
+      });
+    }
+
+    function setStatus(text) {
+      document.getElementById("cardHint").textContent = text || "";
+    }
+
+    async function renderCard() {
+      const panel = document.getElementById("quizPanel");
+      if (!quizCards.length) {
+        panel.style.display = "none";
+        return;
+      }
+
+      panel.style.display = "grid";
+      const card = quizCards[currentIndex];
+      const useImages = document.getElementById("useImages").checked;
+      const imageType = document.getElementById("imageType").value;
+
+      document.getElementById("quizProgress").textContent = `Карточка ${currentIndex + 1} / ${quizCards.length}`;
+      document.getElementById("cardSide").textContent = isFlipped ? "Обратная сторона" : "Лицевая сторона";
+      document.getElementById("cardTerm").textContent = isFlipped ? card.trivialRu : card.formalRu;
+
+      const img = document.getElementById("cardImage");
+      const status = document.getElementById("imageStatus");
+      img.style.display = "none";
+      status.style.display = "block";
+
+      if (isFlipped) {
+        status.textContent = "На обратной стороне только ответ.";
+        setStatus("");
+        return;
+      }
+
+      if (!useImages) {
+        status.textContent = "Картинка отключена.";
+        setStatus("");
+        return;
+      }
+
+      if (!canUseImageType(card, imageType)) {
+        status.textContent = "Для этой карточки выбранный тип недоступен.";
+        setStatus("Попробуй Wiki или AI-рендер.");
+        return;
+      }
+
+      status.textContent = "Загрузка картинки...";
+      setStatus(`Тип: ${imageType}`);
+      const url = await resolveImage(card, imageType);
+      if (!url) {
+        status.textContent = "Не удалось получить изображение.";
+        return;
+      }
+      img.src = url;
+      img.style.display = "block";
+      status.style.display = "none";
+    }
+
+    async function startQuiz() {
+      const btn = document.getElementById("startQuizBtn");
+      const raw = document.getElementById("customNames").value.trim();
+      const langEn = document.getElementById("presetLangIupac").checked;
+      let pool;
+      if (raw) {
+        const items = parsePresetLines(raw, langEn);
+        if (!items.length) {
+          setStatus("Добавь хотя бы одно вещество в список или очисти поле для случайных из базы.");
+          return;
+        }
+        pool = buildPoolFromParsed(items, langEn);
+      } else {
+        pool = pickRandom10FromBase();
+      }
+
+      quizCards = shuffle(pool.map(c => ({ ...c })));
+      currentIndex = 0;
+      isFlipped = false;
+
+      const prevText = btn.textContent;
+      btn.disabled = true;
+      btn.textContent = "Готовлю карточки…";
+      document.getElementById("quizPanel").style.display = "grid";
+      document.getElementById("quizProgress").textContent = "Подготовка названий (Mistral/перевод)…";
+
+      try {
+        for (let i = 0; i < quizCards.length; i += 1) {
+          document.getElementById("quizProgress").textContent = `Подготовка: ${i + 1} / ${quizCards.length}`;
+          await enrichCard(quizCards[i]);
+        }
+        await renderCard();
+      } finally {
+        btn.disabled = false;
+        btn.textContent = prevText;
+      }
+    }
+
+    function initHandlers() {
+      document.getElementById("randomBtn").onclick = () => {
+        document.getElementById("customNames").value = "";
+        document.getElementById("presetLangIupac").checked = false;
+        setStatus("Список очищен. Каждое нажатие «Начать тест» выберет 10 случайных из базы и перемешает порядок.");
+      };
+      document.getElementById("baseOrganicBtn").onclick = () => {
+        document.getElementById("presetLangIupac").checked = false;
+        document.getElementById("customNames").value = READY_PRESETS.organic.join("\n");
+        setStatus("Подставлен список органики (до 10 строк; при нехватке доберётся из базы). Порядок карточек случайный при каждом старте.");
+      };
+      document.getElementById("baseInorganicBtn").onclick = () => {
+        document.getElementById("presetLangIupac").checked = false;
+        document.getElementById("customNames").value = READY_PRESETS.inorganic.join("\n");
+        setStatus("Подставлен список неорганики. Порядок карточек случайный при каждом старте.");
+      };
+      document.getElementById("savePresetBtn").onclick = () => {
+        const name = document.getElementById("presetName").value.trim();
+        const text = document.getElementById("customNames").value.trim();
+        const lang = document.getElementById("presetLangIupac").checked ? "en" : "ru";
+        if (!name || !text) {
+          setStatus("Для сохранения укажи название пресета и непустой список веществ.");
+          return;
+        }
+        savePreset(name, text, lang);
+        setStatus(`Пресет "${name}" сохранен${lang === "en" ? " (ИЮПАК)" : ""}.`);
+      };
+      document.getElementById("iupacOrganicBtn").onclick = () => {
+        document.getElementById("presetLangIupac").checked = true;
+        document.getElementById("customNames").value = READY_PRESETS_IUPAC.organic.join("\n");
+        setStatus("Подставлен список органики в ИЮПАК (EN). Нажми «Начать тест».");
+      };
+      document.getElementById("iupacInorganicBtn").onclick = () => {
+        document.getElementById("presetLangIupac").checked = true;
+        document.getElementById("customNames").value = READY_PRESETS_IUPAC.inorganic.join("\n");
+        setStatus("Подставлен список неорганики в ИЮПАК (EN). Нажми «Начать тест».");
+      };
+      document.getElementById("startQuizBtn").onclick = () => { startQuiz(); };
+      document.getElementById("flipBtn").onclick = () => {
+        if (!quizCards.length) return;
+        isFlipped = !isFlipped;
+        renderCard();
+      };
+      document.getElementById("prevBtn").onclick = () => {
+        if (!quizCards.length) return;
+        currentIndex = Math.max(0, currentIndex - 1);
+        isFlipped = false;
+        renderCard();
+      };
+      document.getElementById("nextBtn").onclick = () => {
+        if (!quizCards.length) return;
+        currentIndex = Math.min(quizCards.length - 1, currentIndex + 1);
+        isFlipped = false;
+        renderCard();
+      };
+      document.getElementById("imageType").onchange = () => renderCard();
+      document.getElementById("useImages").onchange = () => renderCard();
+    }
+
+    renderSavedPresets();
+    initSecretsUi();
+    initHandlers();
+  </script>
+</body>
+</html>
