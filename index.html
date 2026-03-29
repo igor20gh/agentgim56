@@ -167,12 +167,13 @@
             <option value="ai">AI-рендер</option>
             <option value="wiki">Wiki-фото</option>
             <option value="structure2d">2D-структура (если есть)</option>
+            <option value="structure3d">3D-структура (если есть)</option>
           </select>
         </label>
         <button id="startQuizBtn">Начать тест (10 карточек)</button>
       </div>
       <p class="muted" style="margin-top:8px">
-        Тип `structure2d` доступен не для всех веществ. В этом случае карточка покажет название без картинки.
+        Типы `structure2d` и `structure3d` доступны не для всех веществ. В этом случае карточка покажет название без картинки.
       </p>
     </div>
 
@@ -871,16 +872,16 @@
       return pages?.[id]?.thumbnail?.source || null;
     }
 
-    function generateStructure2d(name, cid) {
+    function generateStructureImage(name, cid, recordType = "2d") {
       if (!cid && !name) return null;
       if (cid) {
-        return `https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/cid/${encodeURIComponent(cid)}/PNG?record_type=2d&image_size=large`;
+        return `https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/cid/${encodeURIComponent(cid)}/PNG?record_type=${encodeURIComponent(recordType)}&image_size=large`;
       }
-      return `https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/${encodeURIComponent(name)}/PNG?record_type=2d&image_size=large`;
+      return `https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/${encodeURIComponent(name)}/PNG?record_type=${encodeURIComponent(recordType)}&image_size=large`;
     }
 
     function canUseImageType(card, type) {
-      if (type === "structure2d") return Boolean(card._cid || card.trivialRu || card.formalRu);
+      if (type === "structure2d" || type === "structure3d") return Boolean(card._cid || card.trivialRu || card.formalRu);
       return true;
     }
 
@@ -905,7 +906,9 @@
       if (type === "wiki") {
         url = await getWikiImg(en);
       } else if (type === "structure2d") {
-        url = generateStructure2d(en, card._cid);
+        url = generateStructureImage(en, card._cid, "2d");
+      } else if (type === "structure3d") {
+        url = generateStructureImage(en, card._cid, "3d");
       } else {
         const description = await askMistralAppearance(en);
         const prompt = `realistic photo of ${en}, ${description}, clean background, no text`;
