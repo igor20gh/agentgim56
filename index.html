@@ -827,19 +827,20 @@
     }
 
     async function askMistralAppearance(englishName) {
-      if (!englishName) return "white powder, simple lab sample";
+      if (!englishName) return "realistic appearance, typical color and physical state";
       const t = await mistralComplete(
         [
           "You are helping to build prompts for an image model.",
           `Substance name: "${englishName}".`,
-          "Return exactly one short English phrase (8-16 words) describing realistic visual appearance only:",
-          "color, physical state, texture, typical form in lab or industry.",
+          "Return exactly one short English phrase (8-16 words) describing the MOST TYPICAL real-world appearance only:",
+          "common color, physical state, texture, and usual form in lab/industry for this specific substance.",
+          "Be specific to this substance; do not default to white powder unless it is actually typical.",
           "Do not mention camera, style, text, logos, people, background, or safety warnings.",
           "No markdown. No extra commentary."
         ].join(" "),
         140
       );
-      return t || `realistic look of ${englishName} chemical element`;
+      return t || `${englishName}, realistic typical color and physical form, laboratory sample`;
     }
 
     async function generatePixazoImage(prompt) {
@@ -921,6 +922,7 @@
         const prompt = [
           `ultra realistic studio photo of ${en}`,
           description,
+          "show the substance in its typical real-world form",
           "single substance sample only",
           "clean neutral background",
           "center composition",
