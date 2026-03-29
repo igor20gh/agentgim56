@@ -823,16 +823,23 @@
       if (!card._cid && trivialRu) {
         card._cid = await fetchPubChemCid(trivialRu);
       }
-      card._enFormal = null;
+      card._enTrivial = null;
     }
 
     async function askMistralAppearance(englishName) {
-      if (!englishName) return "white solid, laboratory sample";
+      if (!englishName) return "white powder, simple lab sample";
       const t = await mistralComplete(
-        `Describe how the chemical substance "${englishName}" looks in real life. One short English phrase: color, state, texture. No markdown.`,
-        120
+        [
+          "You are helping to build prompts for an image model.",
+          `Substance name: "${englishName}".`,
+          "Return exactly one short English phrase (8-16 words) describing realistic visual appearance only:",
+          "color, physical state, texture, typical form in lab or industry.",
+          "Do not mention camera, style, text, logos, people, background, or safety warnings.",
+          "No markdown. No extra commentary."
+        ].join(" "),
+        140
       );
-      return t || `realistic look of ${englishName}`;
+      return t || `white powder, crystalline texture, realistic laboratory sample`;
     }
 
     async function generatePixazoImage(prompt) {
@@ -885,23 +892,23 @@
       return true;
     }
 
-    async function getEnglishFormal(card) {
-      const ru = card.formalRu?.trim() || card.trivialRu?.trim() || "";
+    async function getEnglishTrivial(card) {
+      const ru = card.trivialRu?.trim() || card.formalRu?.trim() || "";
       if (!ru) return "";
-      if (card._enFormal) return card._enFormal;
+      if (card._enTrivial) return card._enTrivial;
       try {
-        card._enFormal = await get_translate(ru);
+        card._enTrivial = await get_translate(ru);
       } catch {
-        card._enFormal = ru;
+        card._enTrivial = ru;
       }
-      return card._enFormal;
+      return card._enTrivial;
     }
 
     async function resolveImage(card, type) {
       const key = `${normalize(card.formalRu)}|${normalize(card.trivialRu)}|${type}|${card._cid ?? ""}`;
       if (imageCache.has(key)) return imageCache.get(key);
 
-      const en = await getEnglishFormal(card);
+      const en = await getEnglishTrivial(card);
       let url = null;
       if (type === "wiki") {
         url = await getWikiImg(en);
@@ -911,7 +918,20 @@
         url = generateStructureImage(en, card._cid, "3d");
       } else {
         const description = await askMistralAppearance(en);
-        const prompt = `realistic photo of ${en}, ${description}, clean background, no text`;
+        const prompt = [
+          `ultra realistic studio photo of ${en}`,
+          description,
+          "single substance sample only",
+          "clean neutral background",
+          "center composition",
+          "sharp focus",
+          "high detail texture",
+          "scientifically plausible",
+          "no labels",
+          "no text",
+          "no watermark",
+          "no people"
+        ].join(", ");
         url = await generatePixazoImage(prompt);
       }
 
