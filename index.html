@@ -206,346 +206,16 @@
      */
     const __CHEM_BUILD_MISTRAL__ = "__CHEM_BUILD_MISTRAL__";
     const __CHEM_BUILD_PIXAZO__ = "__CHEM_BUILD_PIXAZO__";
+    /** База карточек подгружается из data.csv (formalRu,trivialRu,organic). */
+    let BASE_CARDS = [];
+    let byAlias = {};
 
-    /** База: формула/формальное и тривиальное русское название. */
-    const BASE_CARDS = [
-      { formalRu: "HNO2", trivialRu: "азотистая кислота" },
-      { formalRu: "C", trivialRu: "алмаз" },
-      { formalRu: "NH3", trivialRu: "аммиак" },
-      { formalRu: "NH3 (aq, 25%)", trivialRu: "аммиачная вода" },
-      { formalRu: "NH4H2PO4 + (NH4)2HPO4", trivialRu: "аммофос" },
-      { formalRu: "NH4H2PO4 + (NH4)2HPO4 + KNO3", trivialRu: "аммофоска" },
-      { formalRu: "CaSO4", trivialRu: "ангидрит" },
-      { formalRu: "Ba(OH)2", trivialRu: "баритовая вода" },
-      { formalRu: "KClO3", trivialRu: "бертолетова соль" },
-      { formalRu: "P4", trivialRu: "белый фосфор" },
-      { formalRu: "Al2O3·xH2O", trivialRu: "боксит" },
-      { formalRu: "Br2 (aq)", trivialRu: "бромная вода" },
-      { formalRu: "сплав Cu + Sn/Fe/Al", trivialRu: "бронзы" },
-      { formalRu: "NO2", trivialRu: "бурый газ" },
-      { formalRu: "N2 + O2 + Ar", trivialRu: "воздух" },
-      { formalRu: "NaCl", trivialRu: "галит" },
-      { formalRu: "F, Cl, Br, I", trivialRu: "галогены" },
-      { formalRu: "Ca(OH)2 (тв.)", trivialRu: "гашёная известь" },
-      { formalRu: "Fe2O3", trivialRu: "гематит" },
-      { formalRu: "MeH", trivialRu: "гидриды" },
-      { formalRu: "NaClO", trivialRu: "гипохлорит натрия" },
-      { formalRu: "Na2SO4·10H2O", trivialRu: "глауберова соль" },
-      { formalRu: "Al2O3", trivialRu: "глинозём" },
-      { formalRu: "CaSO4·2H2O / CaSO4·0.5H2O", trivialRu: "гипс" },
-      { formalRu: "MgSO4·7H2O", trivialRu: "горькая соль" },
-      { formalRu: "SiO2 (~60%)", trivialRu: "гранит" },
-      { formalRu: "C", trivialRu: "графен" },
-      { formalRu: "C", trivialRu: "графит" },
-      { formalRu: "2H2 + O2", trivialRu: "гремучий газ" },
-      { formalRu: "CaCO3·MgCO3", trivialRu: "доломит" },
-      { formalRu: "Fe3O4", trivialRu: "железная окалина" },
-      { formalRu: "FeS2", trivialRu: "железный колчедан" },
-      { formalRu: "FeSO4·7H2O", trivialRu: "железный купорос" },
-      { formalRu: "Ca(OH)2 (aq)", trivialRu: "известковая вода" },
-      { formalRu: "Ca(OH)2 (суспензия)", trivialRu: "известковое молоко" },
-      { formalRu: "CaCO3", trivialRu: "известняк" },
-      { formalRu: "KNO3", trivialRu: "калийная селитра" },
-      { formalRu: "CaCO3", trivialRu: "кальцит" },
-      { formalRu: "NaCl", trivialRu: "каменная соль" },
-      { formalRu: "NH2-CO-NH2", trivialRu: "карбамид" },
-      { formalRu: "CaC2", trivialRu: "карбид кальция" },
-      { formalRu: "KCl·MgCl2·6H2O", trivialRu: "карналлит" },
-      { formalRu: "SiO2", trivialRu: "кварц" },
-      { formalRu: "C", trivialRu: "кокс" },
-      { formalRu: "Al2O3", trivialRu: "корунд" },
-      { formalRu: "Fe2O3", trivialRu: "красный железняк" },
-      { formalRu: "P", trivialRu: "красный фосфор" },
-      { formalRu: "SiO2", trivialRu: "кремнезем" },
-      { formalRu: "Na3[AlF6]", trivialRu: "криолит" },
-      { formalRu: "кристаллогидраты H2SO4", trivialRu: "купоросы" },
-      { formalRu: "сплав Cu + Zn", trivialRu: "латунь" },
-      { formalRu: "AgNO3", trivialRu: "ляпис" },
-      { formalRu: "Fe3O4", trivialRu: "магнетит" },
-      { formalRu: "MgCO3", trivialRu: "магнезит" },
-      { formalRu: "Fe3O4", trivialRu: "магнитный железняк" },
-      { formalRu: "Cu(OH)2·CuCO3", trivialRu: "малахит" },
-      { formalRu: "K2MnO4", trivialRu: "манганат калия" },
-      { formalRu: "CuSO4·5H2O", trivialRu: "медный купорос" },
-      { formalRu: "CaCO3", trivialRu: "мел" },
-      { formalRu: "Na2SO4·10H2O", trivialRu: "мирабилит" },
-      { formalRu: "NH2-CO-NH2", trivialRu: "мочевина" },
-      { formalRu: "CaCO3", trivialRu: "мрамор" },
-      { formalRu: "NH3 (aq, 3–10%)", trivialRu: "нашатырный спирт" },
-      { formalRu: "NH4Cl", trivialRu: "нашатырь" },
-      { formalRu: "CaO", trivialRu: "негашёная известь" },
-      { formalRu: "NO2−", trivialRu: "нитрит-ион" },
-      { formalRu: "O3", trivialRu: "озон" },
-      { formalRu: "SO3 в H2SO4", trivialRu: "олеум" },
-      { formalRu: "KMnO4", trivialRu: "перманганат калия" },
-      { formalRu: "H2O2", trivialRu: "пероксид водорода" },
-      { formalRu: "ClO4−", trivialRu: "перхлорат-ион" },
-      { formalRu: "SiO2", trivialRu: "песок" },
-      { formalRu: "FeS2", trivialRu: "пирит" },
-      { formalRu: "HF", trivialRu: "плавиковая кислота" },
-      { formalRu: "K2CO3", trivialRu: "поташ" },
-      { formalRu: "CaHPO4·2H2O", trivialRu: "преципитат" },
-      { formalRu: "Fe2O3·nH2O + FeO(OH)", trivialRu: "ржавчина" },
-      { formalRu: "соли HNO3", trivialRu: "селитры" },
-      { formalRu: "S8", trivialRu: "сера моноклинная" },
-      { formalRu: "S8", trivialRu: "сера ромбическая" },
-      { formalRu: "S∞", trivialRu: "сера пластическая" },
-      { formalRu: "H2SO3", trivialRu: "сернистая кислота" },
-      { formalRu: "SO2", trivialRu: "сернистый газ" },
-      { formalRu: "SiH4", trivialRu: "силан" },
-      { formalRu: "соли H2SiO3", trivialRu: "силикаты" },
-      { formalRu: "MeSi", trivialRu: "силициды" },
-      { formalRu: "KCl", trivialRu: "сильвин" },
-      { formalRu: "NaCl·KCl", trivialRu: "сильвинит" },
-      { formalRu: "Na2CO3", trivialRu: "сода кальцинированная" },
-      { formalRu: "Na2CO3·10H2O", trivialRu: "сода кристаллическая" },
-      { formalRu: "NaHCO3", trivialRu: "сода питьевая" },
-      { formalRu: "NH4+", trivialRu: "соли аммония" },
-      { formalRu: "Fe + C (<2%)", trivialRu: "сталь" },
-      { formalRu: "Na2O·CaO·6SiO2", trivialRu: "стекло" },
-      { formalRu: "SO4^2−", trivialRu: "сульфаты" },
-      { formalRu: "S^2−", trivialRu: "сульфиды" },
-      { formalRu: "SO3^2−", trivialRu: "сульфиты" },
-      { formalRu: "Ca(H2PO4)2", trivialRu: "суперфосфат двойной" },
-      { formalRu: "Ca(H2PO4)2 + 2CaSO4·H2O", trivialRu: "суперфосфат простой" },
-      { formalRu: "CO2 (тв.)", trivialRu: "сухой лёд" },
-      { formalRu: "Al + Fe3O4", trivialRu: "термит" },
-      { formalRu: "CO", trivialRu: "угарный газ" },
-      { formalRu: "CO2", trivialRu: "углекислый газ" },
-      { formalRu: "FeO2−", trivialRu: "ферриты" },
-      { formalRu: "CaF2", trivialRu: "флюорит" },
-      { formalRu: "PH3", trivialRu: "фосфин" },
-      { formalRu: "Ca3(PO4)2", trivialRu: "фосфоритная мука" },
-      { formalRu: "CFC соединения", trivialRu: "фреоны" },
-      { formalRu: "C60, C80", trivialRu: "фуллерены" },
-      { formalRu: "C60 (кристалл)", trivialRu: "фуллерит" },
-      { formalRu: "O, S, Se, Te", trivialRu: "халькогены" },
-      { formalRu: "CuFeS2", trivialRu: "халькопирит" },
-      { formalRu: "HClO4", trivialRu: "хлорная кислота" },
-      { formalRu: "P", trivialRu: "чёрный фосфор" },
-      { formalRu: "NaNO3", trivialRu: "чилийская селитра" },
-      { formalRu: "Fe + C (>2%)", trivialRu: "чугун" },
-      { formalRu: "2,2,4-триметилпентан", trivialRu: "изооктан" },
-      { formalRu: "2-метилбута-1,3-диен", trivialRu: "изопрен" },
-      { formalRu: "октановая кислота", trivialRu: "каприловая кислота" },
-      { formalRu: "декановая кислота", trivialRu: "каприновая кислота" },
-      { formalRu: "ε-капролактам", trivialRu: "капролактам" },
-      { formalRu: "полиамид-6", trivialRu: "капрон" },
-      { formalRu: "гексановая кислота", trivialRu: "капроновая кислота" },
-      { formalRu: "фенол", trivialRu: "карболовая кислота" },
-      { formalRu: "полиизопрен", trivialRu: "каучук натуральный" },
-      { formalRu: "поли(п-фенилентерефталамид)", trivialRu: "кевлар" },
-      { formalRu: "нитроцеллюлоза", trivialRu: "коллоксилин" },
-      { formalRu: "метилфенол", trivialRu: "крезол" },
-      { formalRu: "бут-2-еновая кислота", trivialRu: "кротоновая кислота" },
-      { formalRu: "диметилбензол", trivialRu: "ксилол" },
-      { formalRu: "изопропилбензол", trivialRu: "кумол" },
-      { formalRu: "полиэтилентерефталат", trivialRu: "лавсан" },
-      { formalRu: "дисахарид (глюкоза + галактоза)", trivialRu: "лактоза" },
-      { formalRu: "2,6-диаминогексановая кислота", trivialRu: "лизин" },
-      { formalRu: "2-гидроксипропан-1,2,3-трикарбоновая кислота", trivialRu: "лимонная кислота" },
-      { formalRu: "октадека-9,12-диеновая кислота", trivialRu: "линолевая кислота" },
-      { formalRu: "октадека-9,12,15-триеновая кислота", trivialRu: "линоленовая кислота" },
-      { formalRu: "пропандиовая кислота", trivialRu: "малоновая кислота" },
-      { formalRu: "дисахарид (глюкоза + глюкоза)", trivialRu: "мальтоза" },
-      { formalRu: "бутановая кислота", trivialRu: "масляная кислота" },
-      { formalRu: "метилпропеновая кислота", trivialRu: "метакриловая кислота" },
-      { formalRu: "2-гидроксипропановая кислота", trivialRu: "молочная кислота" },
-      { formalRu: "карбамид", trivialRu: "мочевина" },
-      { formalRu: "метановая кислота", trivialRu: "муравьиная кислота" },
-      { formalRu: "полиамид", trivialRu: "найлон" },
-      { formalRu: "глицерилтринитрат", trivialRu: "нитроглицерин" },
-      { formalRu: "октадеценовая кислота", trivialRu: "олеиновая кислота" },
-      { formalRu: "гексадекановая кислота", trivialRu: "пальмитиновая кислота" },
-      { formalRu: "п-ацетаминофенол", trivialRu: "парацетамол (тайленол)" },
-      { formalRu: "нонановая кислота", trivialRu: "пеларгоновая кислота" },
-      { formalRu: "тетрахлорэтен", trivialRu: "перхлорэтилен" },
-      { formalRu: "2,4,6-тринитрофенол", trivialRu: "пикриновая кислота" },
-      { formalRu: "полициклический ароматический углеводород", trivialRu: "пирен" },
-      { formalRu: "азин (C5H5N)", trivialRu: "пиридин" },
-      { formalRu: "диазин", trivialRu: "пиримидин" },
-      { formalRu: "1,2,3-тригидроксибензол", trivialRu: "пирогаллол" },
-      { formalRu: "1,2-дигидроксибензол", trivialRu: "пирокатехин" },
-      { formalRu: "нитроцеллюлоза (высокой степени нитрования)", trivialRu: "пироксилин" },
-      { formalRu: "пятичленный гетероцикл (C4H5N)", trivialRu: "пиррол" },
-      { formalRu: "полиметилметакрилат", trivialRu: "плексиглас" }
-    ];
-
-    const READY_PRESETS = {
-      organic: [
-        "2-метилпропан",
-        "2,2,4-триметилпентан",
-        "2-метилбута-1,3-диен",
-        "октановая кислота",
-        "декановая кислота",
-        "ε-капролактам",
-        "полиамид-6",
-        "гексановая кислота",
-        "фенол",
-        "полиизопрен",
-        "поли(п-фенилентерефталамид)",
-        "нитроцеллюлоза",
-        "метилфенол",
-        "бут-2-еновая кислота",
-        "диметилбензол",
-        "изопропилбензол",
-        "полиэтилентерефталат",
-        "дисахарид (глюкоза + галактоза)",
-        "2,6-диаминогексановая кислота",
-        "2-гидроксипропан-1,2,3-трикарбоновая кислота",
-        "октадека-9,12-диеновая кислота",
-        "октадека-9,12,15-триеновая кислота",
-        "пропандиовая кислота",
-        "дисахарид (глюкоза + глюкоза)",
-        "бутановая кислота",
-        "метилпропеновая кислота",
-        "2-гидроксипропановая кислота",
-        "карбамид",
-        "метановая кислота",
-        "полиамид",
-        "глицерилтринитрат",
-        "октадеценовая кислота",
-        "гексадекановая кислота",
-        "п-ацетаминофенол",
-        "нонановая кислота",
-        "тетрахлорэтен",
-        "2,4,6-тринитрофенол",
-        "полициклический ароматический углеводород",
-        "азин (C5H5N)",
-        "диазин",
-        "1,2,3-тригидроксибензол",
-        "1,2-дигидроксибензол",
-        "нитроцеллюлоза (высокой степени нитрования)",
-        "пятичленный гетероцикл (C4H5N)",
-        "полиметилметакрилат"
-      ],
-        
-      inorganic: [
-        "HNO2",
-        "C",
-        "NH3",
-        "NH3 (aq, 25%)",
-        "NH4H2PO4 + (NH4)2HPO4",
-        "NH4H2PO4 + (NH4)2HPO4 + KNO3",
-        "CaSO4",
-        "Ba(OH)2",
-        "KClO3",
-        "P4",
-        "Al2O3·xH2O",
-        "Br2 (aq)",
-        "сплав Cu + Sn/Fe/Al",
-        "NO2",
-        "N2 + O2 + Ar",
-        "NaCl",
-        "F, Cl, Br, I",
-        "Ca(OH)2 (тв.)",
-        "Fe2O3",
-        "MeH",
-        "NaClO",
-        "Na2SO4·10H2O",
-        "Al2O3",
-        "CaSO4·2H2O / CaSO4·0.5H2O",
-        "MgSO4·7H2O",
-        "SiO2 (~60%)",
-        "C",
-        "C",
-        "2H2 + O2",
-        "CaCO3·MgCO3",
-        "Fe3O4",
-        "FeS2",
-        "FeSO4·7H2O",
-        "Ca(OH)2 (aq)",
-        "Ca(OH)2 (суспензия)",
-        "CaCO3",
-        "KNO3",
-        "CaCO3",
-        "NaCl",
-        "NH2-CO-NH2",
-        "CaC2",
-        "KCl·MgCl2·6H2O",
-        "SiO2",
-        "C",
-        "Al2O3",
-        "Fe2O3",
-        "P",
-        "SiO2",
-        "Na3[AlF6]",
-        "кристаллогидраты H2SO4",
-        "сплав Cu + Zn",
-        "AgNO3",
-        "Fe3O4",
-        "MgCO3",
-        "Fe3O4",
-        "Cu(OH)2·CuCO3",
-        "K2MnO4",
-        "CuSO4·5H2O",
-        "CaCO3",
-        "Na2SO4·10H2O",
-        "NH2-CO-NH2",
-        "CaCO3",
-        "NH3 (aq, 3–10%)",
-        "NH4Cl",
-        "CaO",
-        "NO2−",
-        "O3",
-        "SO3 в H2SO4",
-        "KMnO4",
-        "H2O2",
-        "ClO4−",
-        "SiO2",
-        "FeS2",
-        "HF",
-        "K2CO3",
-        "CaHPO4·2H2O",
-        "Fe2O3·nH2O + FeO(OH)",
-        "соли HNO3",
-        "S8",
-        "S8",
-        "S∞",
-        "H2SO3",
-        "SO2",
-        "SiH4",
-        "соли H2SiO3",
-        "MeSi",
-        "KCl",
-        "NaCl·KCl",
-        "Na2CO3",
-        "Na2CO3·10H2O",
-        "NaHCO3",
-        "NH4+",
-        "Fe + C (<2%)",
-        "Na2O·CaO·6SiO2",
-        "SO4^2−",
-        "S^2−",
-        "SO3^2−",
-        "Ca(H2PO4)2",
-        "Ca(H2PO4)2 + 2CaSO4·H2O",
-        "CO2 (тв.)",
-        "Al + Fe3O4",
-        "CO",
-        "CO2",
-        "FeO2−",
-        "CaF2",
-        "PH3",
-        "Ca3(PO4)2",
-        "CFC соединения",
-        "C60, C80",
-        "C60 (кристалл)",
-        "O, S, Se, Te",
-        "CuFeS2",
-        "HClO4",
-        "P",
-        "NaNO3",
-        "Fe + C (>2%)"
-      ]
-    };
 
     let quizCards = [];
     let currentIndex = 0;
     let isFlipped = false;
     const imageCache = new Map();
 
-    const byAlias = buildAliasIndex(BASE_CARDS);
 
     function normalize(v) {
       return String(v || "").trim().toLowerCase();
@@ -558,6 +228,69 @@
         map[normalize(card.trivialRu)] = card;
       });
       return map;
+    }
+
+
+    function parseCsvLine(line) {
+      const cells = [];
+      let cur = "";
+      let inQuotes = false;
+      for (let i = 0; i < line.length; i += 1) {
+        const ch = line[i];
+        if (ch === '"') {
+          if (inQuotes && line[i + 1] === '"') {
+            cur += '"';
+            i += 1;
+          } else {
+            inQuotes = !inQuotes;
+          }
+        } else if (ch === ',' && !inQuotes) {
+          cells.push(cur);
+          cur = "";
+        } else {
+          cur += ch;
+        }
+      }
+      cells.push(cur);
+      return cells.map(c => c.trim());
+    }
+
+    async function loadBaseCardsFromCsv() {
+      const response = await fetch('./data.csv', { cache: 'no-cache' });
+      if (!response.ok) throw new Error('Не удалось загрузить data.csv');
+      const raw = await response.text();
+      const lines = raw
+        .split(/\r?\n/g)
+        .map(line => line.trim())
+        .filter(Boolean);
+      if (lines.length < 2) throw new Error('data.csv пустой или без данных');
+
+      const headers = parseCsvLine(lines[0]);
+      const idxFormal = headers.indexOf('formalRu');
+      const idxTrivial = headers.indexOf('trivialRu');
+      const idxOrganic = headers.indexOf('organic');
+      if (idxFormal === -1 || idxTrivial === -1 || idxOrganic === -1) {
+        throw new Error('В data.csv должны быть колонки formalRu,trivialRu,organic');
+      }
+
+      const cards = lines.slice(1).map(line => {
+        const cells = parseCsvLine(line);
+        const formalRu = (cells[idxFormal] || '').trim();
+        const trivialRu = (cells[idxTrivial] || '').trim();
+        const organicRaw = (cells[idxOrganic] || '').trim().toLowerCase();
+        const organic = organicRaw === 'true' || organicRaw === '1' || organicRaw === 'yes';
+        if (!formalRu || !trivialRu) return null;
+        return { formalRu, trivialRu, organic };
+      }).filter(Boolean);
+
+      BASE_CARDS = cards;
+      byAlias = buildAliasIndex(BASE_CARDS);
+    }
+
+    function getReadyPresetList(isOrganic) {
+      return BASE_CARDS
+        .filter(card => Boolean(card.organic) === isOrganic)
+        .map(card => card.formalRu);
     }
 
     function parsePresetLines(raw) {
@@ -1130,11 +863,11 @@
         setStatus("Список очищен. Каждое нажатие «Начать тест» выберет 10 случайных из базы и перемешает порядок.");
       };
       document.getElementById("baseOrganicBtn").onclick = () => {
-        document.getElementById("customNames").value = READY_PRESETS.organic.join("\n");
+        document.getElementById("customNames").value = getReadyPresetList(true).join("\n");
         setStatus("Подставлен список органики (до 10 строк; при нехватке доберётся из базы). Порядок карточек случайный при каждом старте.");
       };
       document.getElementById("baseInorganicBtn").onclick = () => {
-        document.getElementById("customNames").value = READY_PRESETS.inorganic.join("\n");
+        document.getElementById("customNames").value = getReadyPresetList(false).join("\n");
         setStatus("Подставлен список неорганики. Порядок карточек случайный при каждом старте.");
       };
       document.getElementById("savePresetBtn").onclick = () => {
@@ -1169,9 +902,19 @@
       document.getElementById("useImages").onchange = () => renderCard();
     }
 
-    renderSavedPresets();
-    initSecretsUi();
-    initHandlers();
+    async function initApp() {
+      try {
+        await loadBaseCardsFromCsv();
+      } catch (error) {
+        console.error(error);
+        setStatus("Не удалось загрузить базу data.csv. Проверь файл и формат колонок.");
+      }
+      renderSavedPresets();
+      initSecretsUi();
+      initHandlers();
+    }
+
+    initApp();
   </script>
 </body>
 </html>
