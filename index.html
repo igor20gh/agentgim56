@@ -122,8 +122,7 @@
     <div class="panel">
       <h2>Ключи API</h2>
       <p class="muted" style="margin-bottom:8px">
-        Сохраняются только в этом браузере (<code>localStorage</code>). Для GitHub Pages можно подставить значения при сборке: замени в файле строки
-        <code>__CHEM_BUILD_MISTRAL__</code> и <code>__CHEM_BUILD_PIXAZO__</code> на ключи (например, шагом workflow с <code>sed</code>); пользовательский ввод ниже тогда необязателен.
+        Сохраняются только в этом браузере (<code>localStorage</code>).
       </p>
       <div class="row" style="align-items:flex-end">
         <label style="display:flex;flex-direction:column;gap:4px;flex:1;min-width:200px">
@@ -148,7 +147,7 @@
         <button class="secondary" id="baseInorganicBtn">Готовый: неорганика</button>
       </div>
       <div style="margin-top:10px">
-        <p class="muted">Свой список: по строке или через запятую в формате <code>формальное | тривиальное</code>. Можно указывать только одну часть — вторая добьётся через Mistral.</p>
+        <p class="muted">Свой список: по строке или через запятую в формате <code>формальное | тривиальное</code>. Можно указывать только одну часть — вторая добьётся через Mistral. Ваши пресеты сохраняются только на вашем устройстве. Даже при выходе с сайта.</p>
         <textarea id="customNames" placeholder="фениламин | анилин&#10;этановая кислота | уксусная кислота"></textarea>
       </div>
       <div class="row" style="margin-top:10px">
@@ -164,10 +163,10 @@
         <label><input type="checkbox" id="useImages" checked /> Включить изображения</label>
         <label>Тип:
           <select id="imageType">
-            <option value="ai">AI-рендер</option>
-            <option value="wiki">Wiki-фото</option>
             <option value="structure2d">2D-структура (если есть)</option>
             <option value="structure3d">3D-структура (если есть)</option>
+            <option value="ai">AI-рендер</option>
+            <option value="wiki">Wiki-фото</option>
           </select>
         </label>
         <button id="startQuizBtn">Начать тест (10 карточек)</button>
