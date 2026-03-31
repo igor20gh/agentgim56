@@ -231,7 +231,7 @@
     }
 
 
-    function parseCsvLine(line, delimiter = ",") {
+    function parseCsvLine(line, delimiter = ";") {
       const cells = [];
       let cur = "";
       let inQuotes = false;
@@ -265,7 +265,7 @@
         .filter(Boolean);
       if (lines.length < 2) throw new Error('data.csv пустой или без данных');
 
-      const delimiter = lines[0].includes(';') ? ';' : ',';
+      const delimiter = ';';
       const headers = parseCsvLine(lines[0], delimiter);
       const idxFormal = headers.indexOf('formalRu');
       const idxTrivial = headers.indexOf('trivialRu');
