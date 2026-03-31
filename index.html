@@ -279,7 +279,13 @@
         const formalRu = (cells[idxFormal] || '').trim();
         const trivialRu = (cells[idxTrivial] || '').trim();
         const organicRaw = (cells[idxOrganic] || '').trim().toLowerCase();
-        const organic = organicRaw === 'true' || organicRaw === '1' || organicRaw === 'yes';
+        const organicTrueValues = new Set(['1', 'true', 'yes']);
+        const organicFalseValues = new Set(['0', 'false', 'no', '']);
+        const organic = organicTrueValues.has(organicRaw)
+          ? true
+          : organicFalseValues.has(organicRaw)
+            ? false
+            : false;
         if (!formalRu || !trivialRu) return null;
         return { formalRu, trivialRu, organic };
       }).filter(Boolean);
